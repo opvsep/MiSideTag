@@ -59,7 +59,10 @@ jobs:
 
           New-Item -ItemType Directory -Force -Path $stage | Out-Null
           Copy-Item (Join-Path $targetDir "misidetag-tauri-ts.exe") (Join-Path $stage "MiSideTag.exe")
-          Copy-Item (Join-Path $targetDir "WebView2Loader.dll") $stage
+          $webViewLoader = Join-Path $targetDir "WebView2Loader.dll"
+          if (Test-Path -LiteralPath $webViewLoader) {
+            Copy-Item -LiteralPath $webViewLoader $stage
+          }
           Copy-Item -Path README.md, LICENSE, NOTICE -Destination $stage
           New-Item -ItemType Directory -Force -Path (Join-Path $stage "data") | Out-Null
           Copy-Item ".github/release-data-readme.txt" (Join-Path $stage "data/README.txt")
