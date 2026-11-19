@@ -1,0 +1,61 @@
+# Third-party notices
+
+MiSideTag is licensed under the **GNU General Public License, version 3
+only** (GPL-3.0-only). The full license text is in `LICENSE`.
+
+Copyright (C) 2026 MiSideTag contributors.
+
+## Derived / referenced work
+
+### LDDC — https://github.com/chenmozhijin/LDDC
+License: GPL-3.0-only.
+
+- `app/qrc_crypto.py` contains a Python port of the QRC triple-DES variant
+  implementation from LDDC (`LDDC/core/decryptor/tripledes.py`), which itself
+  is based on WXRIW/QQMusicDecoder. The port is redistributed under the same
+  GPL-3.0 terms.
+- API structure concepts for NetEase eapi and QQ Music lyric retrieval were
+  informed by LDDC.
+
+### 163MusicLyrics — https://github.com/jitwxs/163MusicLyrics
+License: Apache-2.0.
+
+- Product workflow, cookie-login probing, local library scanning and matching
+  UX were used as reference. No source files from this project are copied.
+- Its API documentation/experience informed the NetEase and QQ Music client
+  behavior.
+
+### WXRIW/QQMusicDecoder — https://github.com/WXRIW/QQMusicDecoder
+The original C# reference for the non-standard QRC DES implementation.
+No source is included directly; the Python implementation descends from the
+LDDC port described above.
+
+### qrc-decoder — https://www.npmjs.com/package/qrc-decoder
+License: MIT.
+
+- The Tauri/TypeScript rewrite uses the JavaScript implementation of the
+  non-standard QRC triple-DES variant for QQ word-level lyric decoding.
+
+## Runtime dependencies
+
+| Component | Version used | License | Project |
+| --- | --- | --- | --- |
+| Python | 3.12 | PSF License | https://www.python.org/ |
+| PySide6 / Qt for Python | 6.12 | LGPL-3.0 / GPL-2.0 / GPL-3.0 (tri-license) | https://doc.qt.io/qtforpython-6/ |
+| requests | 2.34 | Apache-2.0 | https://requests.readthedocs.io/ |
+| urllib3 | 2.x | MIT | https://urllib3.readthedocs.io/ |
+| certifi | 2026 | MPL-2.0 | https://certifi.io/ |
+| charset-normalizer | 3.x | MIT | https://github.com/jawah/charset_normalizer |
+| idna | 3.x | BSD-3-Clause | https://github.com/kjd/idna |
+| mutagen | 1.48 | GPL-2.0-or-later | https://mutagen.readthedocs.io/ |
+| pycryptodome | 4.x | BSD-2-Clause | https://www.pycryptodome.org/ |
+
+Build-only dependencies: PyInstaller (GPL-2.0-or-later with bootloader
+exception), Pillow (HPND), lameenc/soundfile (used only for local test fixture
+generation and not bundled).
+
+## Platform trademarks
+
+NetEase Cloud Music (网易云音乐) and QQ Music (QQ 音乐) are trademarks of their
+respective owners. MiSideTag is an unofficial tool and is not affiliated with
+either platform.

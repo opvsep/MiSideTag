@@ -1,0 +1,91 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  windows-release:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.25.0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Verify source
+        run: |
+          pnpm check
+          pnpm test
+          pnpm build:web
+          cargo test --manifest-path src-tauri/Cargo.toml --locked
+          cargo clippy --manifest-path src-tauri/Cargo.toml --all-targets --locked -- -D warnings
+
+      - name: Build Windows executable
+        run: pnpm tauri build --no-bundle
+
+      - name: Package portable release
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+          $version = node -p "require('./package.json').version"
+          $stageName = "MiSideTag-TS-$version-win64"
+          $releaseRoot = Join-Path $PWD "release"
+          $stage = Join-Path $releaseRoot $stageName
+          $archive = Join-Path $releaseRoot "$stageName.zip"
+          $targetDir = Join-Path $PWD "src-tauri/target/release"
+
+          New-Item -ItemType Directory -Force -Path $stage | Out-Null
+          Copy-Item (Join-Path $targetDir "misidetag-tauri-ts.exe") (Join-Path $stage "MiSideTag.exe")
+          Copy-Item (Join-Path $targetDir "WebView2Loader.dll") $stage
+          Copy-Item -Path README.md, LICENSE, NOTICE -Destination $stage
+          New-Item -ItemType Directory -Force -Path (Join-Path $stage "data") | Out-Null
+          Copy-Item ".github/release-data-readme.txt" (Join-Path $stage "data/README.txt")
+
+          Compress-Archive -Path (Join-Path $stage "*") -DestinationPath $archive -CompressionLevel Optimal
+          $hash = (Get-FileHash -Algorithm SHA256 $archive).Hash
+          "$hash *$stageName.zip" | Set-Content (Join-Path $releaseRoot "SHA256SUMS.txt") -Encoding ASCII
+          "RELEASE_ARCHIVE=$archive" >> $env:GITHUB_ENV
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: MiSideTag-TS-windows
+          path: |
+            release/*.zip
+            release/SHA256SUMS.txt
+
+      - name: Publish GitHub release
+        if: startsWith(github.ref, 'refs/tags/')
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $version = node -p "require('./package.json').version"
+          gh release create $env:GITHUB_REF_NAME `
+            $env:RELEASE_ARCHIVE `
+            "release/SHA256SUMS.txt" `
+            --repo $env:GITHUB_REPOSITORY `
+            --title "MiSideTag $version" `
+            --generate-notes
