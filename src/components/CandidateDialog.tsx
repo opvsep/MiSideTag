@@ -2,6 +2,7 @@ import {
   Check,
   LoaderCircle,
   Music2,
+  RefreshCw,
   Search,
   X,
 } from "lucide-react";
@@ -14,6 +15,7 @@ import type {
 import { SOURCE_COLOR, SOURCE_SHORT, artistText } from "../types";
 import { fmtDuration } from "../lib/utils";
 import { extractHttpUrl } from "../lib/links";
+import { RESULTS_PER_PLATFORM } from "../lib/searchLimits";
 import { SongCover } from "./SongCover";
 
 type Filter = "all" | ProviderSource;
@@ -60,7 +62,9 @@ export function CandidateDialog({
   const [searching, setSearching] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
   const [page, setPage] = useState(1);
-  const [hasMore, setHasMore] = useState(match.candidates.length >= 20);
+  const [hasMore, setHasMore] = useState(
+    match.candidates.length >= RESULTS_PER_PLATFORM,
+  );
   const [error, setError] = useState("");
   const [note, setNote] = useState("");
   const [selected, setSelected] = useState(
@@ -290,7 +294,7 @@ export function CandidateDialog({
                 {loadingMore ? (
                   <LoaderCircle size={14} className="spin" />
                 ) : (
-                  <span>⌄</span>
+                  <RefreshCw size={14} />
                 )}
                 {loadingMore ? "正在加载" : "加载更多结果"}
               </button>

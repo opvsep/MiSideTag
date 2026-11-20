@@ -1,0 +1,2 @@
+export const RESULTS_PER_PLATFORM = 30;
+export const TOTAL_RESULTS = RESULTS_PER_PLATFORM * 2;

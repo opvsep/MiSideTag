@@ -78,6 +78,10 @@ import type {
 } from "./types";
 import { SOURCE_SHORT, songKey } from "./types";
 import { normalizeCookie } from "./lib/utils";
+import {
+  RESULTS_PER_PLATFORM,
+  TOTAL_RESULTS,
+} from "./lib/searchLimits";
 
 type Filter = "all" | ProviderSource;
 
@@ -406,14 +410,15 @@ export default function App() {
       const result = await searchAll(effectiveQuery, {
         cookies: config.cookies,
         source: searchSourceFilter,
-        limit: 30,
+        limit: RESULTS_PER_PLATFORM,
         page: nextPage,
       });
       if (generation !== searchGeneration.current) return;
       setSearchPageNumber(nextPage);
       setHasMore(
         Object.values(result.bySource).some(
-          (sourceSongs) => (sourceSongs?.length || 0) >= 30,
+          (sourceSongs) =>
+            (sourceSongs?.length || 0) >= RESULTS_PER_PLATFORM,
         ),
       );
       startTransition(() => {
@@ -669,7 +674,7 @@ export default function App() {
                       source,
                       query,
                       config.cookies[source],
-                      25,
+                      RESULTS_PER_PLATFORM,
                     );
                     collected.push(...result);
                   } catch (error) {
@@ -679,10 +684,18 @@ export default function App() {
                   }
                 }),
               );
-              const ranked = rankVariants(current.track, collected, 24);
+              const ranked = rankVariants(
+                current.track,
+                collected,
+                TOTAL_RESULTS,
+              );
               if (ranked[0]?.score >= 45) break;
             }
-            const candidates = rankVariants(current.track, collected, 24);
+            const candidates = rankVariants(
+              current.track,
+              collected,
+              TOTAL_RESULTS,
+            );
             const match = finalizeMatch(
               current.track,
               candidates,
@@ -867,7 +880,7 @@ export default function App() {
               source,
               customQuery,
               config.cookies[source],
-              30,
+              RESULTS_PER_PLATFORM,
               page,
             );
             if (songs.length) {
@@ -890,7 +903,9 @@ export default function App() {
     const pageCandidates = rankVariants(
       item.track,
       collected,
-      sourceFilter === "all" ? 60 : 30,
+      sourceFilter === "all"
+        ? TOTAL_RESULTS
+        : RESULTS_PER_PLATFORM,
     );
     const base = appendExisting ? item.candidates : [];
     const merged = new Map<string, MatchCandidate>();
@@ -906,8 +921,9 @@ export default function App() {
         right.score - left.score ||
         Number(right.reliable) - Number(left.reliable),
     );
-    const hasMore =
-      sources.some((source) => pageCounts[source] >= 30);
+    const hasMore = sources.some(
+      (source) => pageCounts[source] >= RESULTS_PER_PLATFORM,
+    );
     setLocalMatches((matches) =>
       matches.map((entry, index) =>
         index === row

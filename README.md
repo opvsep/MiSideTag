@@ -17,6 +17,7 @@ MiSideTag 的正式 TypeScript 桌面版：**Tauri 2 + React + TypeScript**。
 - QQ 音乐增加 songmid / musicid 歌词回退，以及单曲页解析重试
 - 网易云、QQ 单曲封面支持 Tauri 原生取图回退，修复偶发缺失
 - 搜索结果按两个平台的原生顺序交错展示
+- 歌词搜索与本地匹配统一按每平台 30 条结果加载
 - 歌词预览、译文、自检和逐字时间轴演示
 - 译文显示默认开启，可在预览区按需关闭
 - LRC / Salt Player SPL 序列化
