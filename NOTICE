@@ -10,12 +10,8 @@ Copyright (C) 2026 MiSideTag contributors.
 ### LDDC — https://github.com/chenmozhijin/LDDC
 License: GPL-3.0-only.
 
-- `app/qrc_crypto.py` contains a Python port of the QRC triple-DES variant
-  implementation from LDDC (`LDDC/core/decryptor/tripledes.py`), which itself
-  is based on WXRIW/QQMusicDecoder. The port is redistributed under the same
-  GPL-3.0 terms.
-- API structure concepts for NetEase eapi and QQ Music lyric retrieval were
-  informed by LDDC.
+- API structure and provider fallback concepts informed the search and lyric
+  retrieval behavior.
 
 ### 163MusicLyrics — https://github.com/jitwxs/163MusicLyrics
 License: Apache-2.0.
@@ -27,8 +23,8 @@ License: Apache-2.0.
 
 ### WXRIW/QQMusicDecoder — https://github.com/WXRIW/QQMusicDecoder
 The original C# reference for the non-standard QRC DES implementation.
-No source is included directly; the Python implementation descends from the
-LDDC port described above.
+No source is included directly. The runtime decoder is provided by
+`qrc-decoder`.
 
 ### qrc-decoder — https://www.npmjs.com/package/qrc-decoder
 License: MIT.
@@ -40,19 +36,20 @@ License: MIT.
 
 | Component | Version used | License | Project |
 | --- | --- | --- | --- |
-| Python | 3.12 | PSF License | https://www.python.org/ |
-| PySide6 / Qt for Python | 6.12 | LGPL-3.0 / GPL-2.0 / GPL-3.0 (tri-license) | https://doc.qt.io/qtforpython-6/ |
-| requests | 2.34 | Apache-2.0 | https://requests.readthedocs.io/ |
-| urllib3 | 2.x | MIT | https://urllib3.readthedocs.io/ |
-| certifi | 2026 | MPL-2.0 | https://certifi.io/ |
-| charset-normalizer | 3.x | MIT | https://github.com/jawah/charset_normalizer |
-| idna | 3.x | BSD-3-Clause | https://github.com/kjd/idna |
-| mutagen | 1.48 | GPL-2.0-or-later | https://mutagen.readthedocs.io/ |
-| pycryptodome | 4.x | BSD-2-Clause | https://www.pycryptodome.org/ |
+| Tauri 2 | 2.x | MIT / Apache-2.0 | https://tauri.app/ |
+| React / React DOM | 19.x | MIT | https://react.dev/ |
+| lucide-react | 0.468.x | ISC | https://lucide.dev/ |
+| qrc-decoder | 1.x | MIT | https://www.npmjs.com/package/qrc-decoder |
+| lofty | 0.24.x | MIT | https://github.com/Serial-ATA/lofty-rs |
+| reqwest | 0.12.x | MIT / Apache-2.0 | https://github.com/seanmonstar/reqwest |
+| rfd | 0.15.x | MIT | https://github.com/PolyMeilex/rfd |
+| serde / serde_json | 1.x | MIT / Apache-2.0 | https://serde.rs/ |
+| walkdir | 2.x | MIT / Unlicense | https://github.com/BurntSushi/walkdir |
+| WebView2 Runtime | Windows component | Microsoft software license | https://developer.microsoft.com/microsoft-edge/webview2/ |
 
-Build-only dependencies: PyInstaller (GPL-2.0-or-later with bootloader
-exception), Pillow (HPND), lameenc/soundfile (used only for local test fixture
-generation and not bundled).
+Development-only tools include TypeScript, Vite, Vitest, pnpm, Rust, and the
+Tauri CLI. Exact resolved versions are recorded in `pnpm-lock.yaml` and
+`src-tauri/Cargo.lock`.
 
 ## Platform trademarks
 

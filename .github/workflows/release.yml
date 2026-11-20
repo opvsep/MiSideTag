@@ -55,6 +55,7 @@ jobs:
           $releaseRoot = Join-Path $PWD "release"
           $stage = Join-Path $releaseRoot $stageName
           $archive = Join-Path $releaseRoot "$stageName.zip"
+          $sourceArchive = Join-Path $releaseRoot "MiSideTag-TS-$version-source.zip"
           $targetDir = Join-Path $PWD "src-tauri/target/release"
 
           New-Item -ItemType Directory -Force -Path $stage | Out-Null
@@ -68,9 +69,13 @@ jobs:
           Copy-Item ".github/release-data-readme.txt" (Join-Path $stage "data/README.txt")
 
           Compress-Archive -Path (Join-Path $stage "*") -DestinationPath $archive -CompressionLevel Optimal
-          $hash = (Get-FileHash -Algorithm SHA256 $archive).Hash
-          "$hash *$stageName.zip" | Set-Content (Join-Path $releaseRoot "SHA256SUMS.txt") -Encoding ASCII
+          git archive --format=zip --output="$sourceArchive" HEAD
+          @($archive, $sourceArchive) | ForEach-Object {
+            $fileHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $_).Hash
+            "$fileHash *$([IO.Path]::GetFileName($_))"
+          } | Set-Content (Join-Path $releaseRoot "SHA256SUMS.txt") -Encoding ASCII
           "RELEASE_ARCHIVE=$archive" >> $env:GITHUB_ENV
+          "RELEASE_SOURCE_ARCHIVE=$sourceArchive" >> $env:GITHUB_ENV
 
       - uses: actions/upload-artifact@v4
         with:
@@ -88,6 +93,7 @@ jobs:
           $version = node -p "require('./package.json').version"
           gh release create $env:GITHUB_REF_NAME `
             $env:RELEASE_ARCHIVE `
+            $env:RELEASE_SOURCE_ARCHIVE `
             "release/SHA256SUMS.txt" `
             --repo $env:GITHUB_REPOSITORY `
             --title "MiSideTag $version" `

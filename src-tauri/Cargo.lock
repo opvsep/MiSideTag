@@ -2304,7 +2304,7 @@ dependencies = [
 
 [[package]]
 name = "misidetag-tauri-ts"
-version = "2.0.0"
+version = "2.1.0"
 dependencies = [
  "base64 0.22.1",
  "lofty",
