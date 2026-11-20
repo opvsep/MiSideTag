@@ -222,7 +222,11 @@ export function CandidateDialog({
                   type="button"
                   key={key}
                   className={selected === key ? "active" : ""}
-                  onClick={() => setSelected(key)}
+                  disabled={loading}
+                  onClick={() => {
+                    setSelected(key);
+                    onSelect(candidate);
+                  }}
                 >
                   <SongCover
                     src={candidate.song.coverUrl}
@@ -285,8 +289,8 @@ export function CandidateDialog({
         <footer className="candidate-match-footer">
           <span>
             {selectedCandidate
-              ? `已选择：${selectedCandidate.song.title} — ${artistText(selectedCandidate.song)} · ${SOURCE_SHORT[selectedCandidate.song.source]}`
-              : "请选择一个匹配结果"}
+              ? `点击候选项将立即应用：${selectedCandidate.song.title} — ${artistText(selectedCandidate.song)} · ${SOURCE_SHORT[selectedCandidate.song.source]}`
+              : "点击候选项即可应用并关闭窗口"}
           </span>
           <button type="button" className="text-button" onClick={onClose}>
             取消

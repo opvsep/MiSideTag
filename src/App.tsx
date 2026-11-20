@@ -61,6 +61,7 @@ import {
   checkLyrics,
   type LyricCheckReport,
 } from "./lib/quality";
+import { extractHttpUrl } from "./lib/links";
 import {
   saveLocalLyrics,
   saveOnlineLyrics,
@@ -345,17 +346,19 @@ export default function App() {
     if (append) setLoadingMore(true);
     else setSearching(true);
     try {
-      if (!append && /https?:\/\//i.test(effectiveQuery)) {
+      if (!append && extractHttpUrl(effectiveQuery)) {
         const song = await resolveSongLink(effectiveQuery, config.cookies);
         if (generation !== searchGeneration.current) return;
-        if (song) {
-          setSongs([song]);
-          setHasMore(false);
-          setSelectedSong(song);
-          await loadSongLyrics(song);
-          notify("success", "已通过链接定位歌曲");
+        if (!song) {
+          notify("error", "无法识别这个音乐分享链接");
           return;
         }
+        setSongs([song]);
+        setHasMore(false);
+        setSelectedSong(song);
+        await loadSongLyrics(song);
+        notify("success", "已通过分享链接定位歌曲");
+        return;
       }
       const searchSourceFilter = append ? filter : "all";
       const result = await searchAll(effectiveQuery, {

@@ -1052,13 +1052,6 @@ button.feature-pill:hover {
   cursor: pointer;
 }
 
-.external-link {
-  position: absolute;
-  top: 12px;
-  right: 12px;
-  display: none;
-}
-
 .spin {
   animation: spin 0.85s linear infinite;
 }
@@ -3354,6 +3347,11 @@ button.toggle > span {
 
 .candidate-match-list > button:not(.candidate-load-more):hover {
   background: rgba(255, 255, 255, 0.025);
+}
+
+.candidate-match-list > button:disabled {
+  opacity: 0.6;
+  cursor: progress;
 }
 
 .candidate-match-list > button.active {

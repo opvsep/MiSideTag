@@ -2,7 +2,6 @@ import {
   BadgeCheck,
   Copy,
   Download,
-  ExternalLink,
   FileDown,
   FolderOpen,
   Languages,
@@ -441,9 +440,6 @@ export function SearchPage({
             </button>
           </div>
         )}
-        <button type="button" className="external-link" aria-label="平台页面">
-          <ExternalLink size={14} />
-        </button>
       </aside>
     </div>
   );

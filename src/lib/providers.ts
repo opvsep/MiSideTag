@@ -27,6 +27,10 @@ import {
   isHighPerformanceMode,
   withProviderConcurrency,
 } from "./performance";
+import {
+  extractHttpUrl,
+  extractSongLinkIdentifiers,
+} from "./links";
 
 const USER_AGENT =
   "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
@@ -1056,31 +1060,25 @@ export async function resolveSongLink(
 ): Promise<Song | null> {
   const trimmed = text.trim();
   if (!trimmed) return null;
-  let neteaseId =
-    trimmed.match(/(?:music\.163\.com|y\.music\.163\.com).*?(?:id=|\/song\/)(\d+)/)?.[1] ||
-    ( /^\d{5,}$/.test(trimmed) ? trimmed : "");
-  let qqMid =
-    trimmed.match(/y\.qq\.com\/(?:n\/ryqq\/)?songDetail\/([A-Za-z0-9]+)/)?.[1] ||
-    trimmed.match(/[?&](?:songmid|mid)=([A-Za-z0-9]{8,})/)?.[1] ||
-    "";
+  let identifiers = extractSongLinkIdentifiers(trimmed);
+  if (!identifiers.neteaseId && !identifiers.qqMid && /^\d{5,}$/.test(trimmed)) {
+    identifiers = { neteaseId: trimmed, qqMid: "" };
+  }
 
-  if (!neteaseId && !qqMid && /^https?:\/\//.test(trimmed)) {
+  const sharedUrl = extractHttpUrl(trimmed);
+  if (!identifiers.neteaseId && !identifiers.qqMid && sharedUrl) {
     try {
-      const response = await httpRequest({ url: trimmed });
-      const finalUrl = response.finalUrl;
-      neteaseId =
-        finalUrl.match(/(?:id=|\/song\/)(\d+)/)?.[1] || "";
-      qqMid =
-        finalUrl.match(/songDetail\/([A-Za-z0-9]+)/)?.[1] ||
-        finalUrl.match(/[?&]mid=([A-Za-z0-9]{8,})/)?.[1] ||
-        "";
+      const response = await httpRequest({ url: sharedUrl });
+      identifiers = extractSongLinkIdentifiers(
+        `${response.finalUrl}\n${response.text}`,
+      );
     } catch {
       return null;
     }
   }
-  if (neteaseId) {
+  if (identifiers.neteaseId) {
     const data = await requestJson(
-      `https://music.163.com/api/song/detail?ids=${encodeURIComponent(`[${neteaseId}]`)}`,
+      `https://music.163.com/api/song/detail?ids=${encodeURIComponent(`[${identifiers.neteaseId}]`)}`,
       {
         Referer: "https://music.163.com/",
         Cookie: cookieHeader(cookies.netease || ""),
@@ -1091,7 +1089,7 @@ export async function resolveSongLink(
     const album = object(raw.album ?? raw.al) ?? {};
     return {
       source: "netease",
-      id: stringValue(raw.id) || neteaseId,
+      id: stringValue(raw.id) || identifiers.neteaseId,
       title: stringValue(raw.name),
       artists: namesFrom(raw.artists ?? raw.ar),
       album: stringValue(album.name),
@@ -1100,9 +1098,9 @@ export async function resolveSongLink(
       raw,
     };
   }
-  if (qqMid) {
+  if (identifiers.qqMid) {
     const params = new URLSearchParams({
-      songmid: qqMid,
+      songmid: identifiers.qqMid,
       format: "json",
       platform: "yqq",
       needNewCode: "0",
@@ -1121,8 +1119,8 @@ export async function resolveSongLink(
     const albumMid = stringValue(album.mid);
     return {
       source: "qq",
-      id: stringValue(raw.mid ?? raw.songmid) || qqMid,
-      mid: qqMid,
+      id: stringValue(raw.mid ?? raw.songmid) || identifiers.qqMid,
+      mid: identifiers.qqMid,
       numericId: stringValue(raw.id),
       title: stringValue(raw.title ?? raw.name),
       artists: namesFrom(raw.singer),

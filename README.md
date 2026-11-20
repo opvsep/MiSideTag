@@ -21,11 +21,12 @@ MiSideTag 的正式 TypeScript 桌面版：**Tauri 2 + React + TypeScript**。
 - 译文显示默认开启，可在预览区按需关闭
 - LRC / Salt Player SPL 序列化
 - 退出按钮、Alt+F4 和 Ctrl+Q 二次确认
-- 根据歌曲链接定位网易云或 QQ 音乐歌曲
+- 从网易云 / QQ 音乐分享文案中识别长链接、短链接和歌曲 ID，并直接定位歌曲
 - 本地音频扫描，支持 MP3、FLAC、M4A、OGG、OPUS、WAV、AIFF、APE、WV
 - 原生文件选择、文件/文件夹拖放和重复歌曲去重
 - 基于 `lofty` 的 ID3 `USLT`、Vorbis `LYRICS`、MP4 `©lyr`、APE `LYRICS` 写回
 - 本地多平台候选评分、自动匹配、待确认和手动换歌
+- 本地匹配选择候选项后立即应用并关闭候选窗口
 - 本地批量匹配支持 1～10 首歌曲并发处理，并限制各平台网络请求上限
 - 高性能模式提高连接池、搜索变体、封面加载与平台请求并发
 - 设置草稿、保存/取消、Cookie 本地存储和独立便携目录
