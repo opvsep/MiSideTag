@@ -53,10 +53,10 @@ describe("music share links", () => {
   });
 
   it("distinguishes numeric QQ song details from songmid routes", () => {
-    expect(
-      extractSongLinkIdentifiers(
-        "https://y.qq.com/n/ryqq_v2/songDetail/108363223?ADTAG=h5_play_song",
-      ).qqNumericId,
-    ).toBe("108363223");
+    const identifiers = extractSongLinkIdentifiers(
+      'https://y.qq.com/n/ryqq_v2/songDetail/108363223?ADTAG=h5_play_song{"mid":"001vMdn10xPWU6","name":"bôa"}',
+    );
+    expect(identifiers.qqNumericId).toBe("108363223");
+    expect(identifiers.qqMid).toBe("");
   });
 });

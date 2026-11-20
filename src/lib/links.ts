@@ -36,23 +36,25 @@ export function extractSongLinkIdentifiers(text: string): SongLinkIdentifiers {
       normalized.match(
         /(?:songDetail|song)\/([A-Za-z0-9]{8,})/i,
       )?.[1] || "";
-    if (/^\d+$/.test(qqRouteId)) qqNumericId = qqRouteId;
-    else qqMid = qqRouteId;
-
-    qqNumericId ||=
-      normalized.match(/[?&#](?:songid|songId)=(\d+)/i)?.[1] ||
-      normalized.match(
-        /["'](?:songid|songId)["']\s*:\s*(\d+)/i,
-      )?.[1] ||
-      "";
-    qqMid ||=
-      normalized.match(
-        /[?&#](?:songmid|songMid|mid)=([A-Za-z0-9]{8,})/i,
-      )?.[1] ||
-      normalized.match(
-        /["'](?:songmid|songMid|mid)["']\s*:\s*["']([A-Za-z0-9]{8,})["']/i,
-      )?.[1] ||
-      "";
+    if (qqRouteId) {
+      if (/^\d+$/.test(qqRouteId)) qqNumericId = qqRouteId;
+      else qqMid = qqRouteId;
+    } else {
+      qqNumericId =
+        normalized.match(/[?&#](?:songid|songId)=(\d+)/i)?.[1] ||
+        normalized.match(
+          /["'](?:songid|songId)["']\s*:\s*(\d+)/i,
+        )?.[1] ||
+        "";
+      qqMid =
+        normalized.match(
+          /[?&#](?:songmid|songMid|mid)=([A-Za-z0-9]{8,})/i,
+        )?.[1] ||
+        normalized.match(
+          /["'](?:songmid|songMid|mid)["']\s*:\s*["']([A-Za-z0-9]{8,})["']/i,
+        )?.[1] ||
+        "";
+    }
   }
 
   return { neteaseId, qqMid, qqNumericId };
