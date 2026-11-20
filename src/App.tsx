@@ -75,7 +75,7 @@ import type {
   ProviderSource,
   Song,
 } from "./types";
-import { songKey } from "./types";
+import { SOURCE_SHORT, songKey } from "./types";
 
 type Filter = "all" | ProviderSource;
 
@@ -768,6 +768,45 @@ export default function App() {
     const item = localMatches[row];
     if (!item) {
       return { candidates: [], warnings: [], hasMore: false };
+    }
+    if (extractHttpUrl(customQuery)) {
+      try {
+        const song = await resolveSongLink(customQuery, config.cookies);
+        const candidates = song
+          ? rankVariants(item.track, [song], 1)
+          : [];
+        const warning = song ? "" : "无法识别这个音乐分享链接";
+        setLocalMatches((matches) =>
+          matches.map((entry, index) =>
+            index === row
+              ? {
+                  ...entry,
+                  candidates,
+                  selected: candidates[0] || null,
+                  status: candidates.length ? "review" : "none",
+                  detail: candidates.length
+                    ? `分享链接 · ${SOURCE_SHORT[candidates[0].song.source]}`
+                    : warning,
+                }
+              : entry,
+          ),
+        );
+        if (warning) notify("error", warning);
+        return {
+          candidates,
+          warnings: warning ? [warning] : [],
+          hasMore: false,
+        };
+      } catch (error) {
+        const message =
+          error instanceof Error ? error.message : String(error);
+        notify("error", `分享链接解析失败：${message}`);
+        return {
+          candidates: [],
+          warnings: [`分享链接解析失败：${message}`],
+          hasMore: false,
+        };
+      }
     }
     const sources: ProviderSource[] =
       sourceFilter === "all" ? ["netease", "qq"] : [sourceFilter];

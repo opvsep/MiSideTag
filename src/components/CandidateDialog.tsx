@@ -13,6 +13,7 @@ import type {
 } from "../types";
 import { SOURCE_COLOR, SOURCE_SHORT, artistText } from "../types";
 import { fmtDuration } from "../lib/utils";
+import { extractHttpUrl } from "../lib/links";
 import { SongCover } from "./SongCover";
 
 type Filter = "all" | ProviderSource;
@@ -65,6 +66,10 @@ export function CandidateDialog({
   const [selected, setSelected] = useState(
     match.selected ? candidateKey(match.selected) : "",
   );
+  const isShareLink = useMemo(
+    () => Boolean(extractHttpUrl(query)),
+    [query],
+  );
 
   const visible = useMemo(
     () =>
@@ -95,6 +100,7 @@ export function CandidateDialog({
     setError("");
     setNote("");
     try {
+      if (reset && isShareLink) setFilter("all");
       const nextPage = reset ? 1 : page + 1;
       const response = await onSearch(
         query.trim(),
@@ -163,7 +169,7 @@ export function CandidateDialog({
               onKeyDown={(event) => {
                 if (event.key === "Enter") void runSearch(true);
               }}
-              placeholder="输入歌名、歌手或自定义搜索词"
+              placeholder="输入歌名、歌手，或粘贴音乐分享链接"
             />
             <button
               type="button"
@@ -176,7 +182,7 @@ export function CandidateDialog({
               ) : (
                 <Search size={15} />
               )}
-              {searching ? "搜索中" : "搜索"}
+              {searching ? "处理中" : isShareLink ? "定位" : "搜索"}
             </button>
           </div>
 
