@@ -315,6 +315,10 @@ export function SettingsPage({
                   {editingAccount === source ? (
                     <div className="settings-cookie-editor">
                       <textarea
+                        name={`misidetag-cookie-${source}`}
+                        autoComplete="off"
+                        autoCapitalize="off"
+                        autoCorrect="off"
                         value={draft.cookies[source]}
                         onChange={(event) =>
                           setDraft((current) => ({

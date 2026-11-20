@@ -164,6 +164,12 @@ export function CandidateDialog({
 
           <div className="candidate-main-search">
             <input
+              name="misidetag-local-search"
+              type="text"
+              autoComplete="off"
+              autoCapitalize="off"
+              autoCorrect="off"
+              spellCheck={false}
               value={query}
               onChange={(event) => setQuery(event.target.value)}
               onKeyDown={(event) => {

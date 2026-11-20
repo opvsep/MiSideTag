@@ -138,6 +138,12 @@ export function SearchPage({
           <Search size={20} />
           <input
             id="search-input"
+            name="misidetag-search"
+            type="text"
+            autoComplete="off"
+            autoCapitalize="off"
+            autoCorrect="off"
+            spellCheck={false}
             value={query}
             onChange={(event) => onQueryChange(event.target.value)}
             onKeyDown={(event) => {
