@@ -62,24 +62,34 @@ export function Sidebar({
       <div className="sidebar-spacer" />
       <div className="account-summary">
         <span className="eyebrow">账号状态</span>
-        {(["netease", "qq"] as const).map((source) => (
-          <button
-            type="button"
-            key={source}
-            className="account-line"
-            onClick={() => onNavigate("settings")}
-          >
-            <i className={`account-dot ${source}`} />
-            <span>
-              <strong>{source === "netease" ? "网易云音乐" : "QQ 音乐"}</strong>
-              <small>
-                {accounts[source].nickname ||
-                  (cookies[source] ? cookiePreview(cookies[source]) : "游客模式")}
-              </small>
-            </span>
-            <span className="account-arrow">›</span>
-          </button>
-        ))}
+        {(["netease", "qq"] as const).map((source) => {
+          const account = accounts[source];
+          const label =
+            account.valid === true
+              ? account.nickname || "已登录"
+              : account.valid === false
+                ? "登录已失效"
+                : cookies[source]
+                  ? `待验证 · ${cookiePreview(cookies[source])}`
+                  : "游客模式";
+          return (
+            <button
+              type="button"
+              key={source}
+              className="account-line"
+              onClick={() => onNavigate("settings")}
+            >
+              <i className={`account-dot ${source}`} />
+              <span>
+                <strong>
+                  {source === "netease" ? "网易云音乐" : "QQ 音乐"}
+                </strong>
+                <small>{label}</small>
+              </span>
+              <span className="account-arrow">›</span>
+            </button>
+          );
+        })}
       </div>
 
       <div className="sidebar-footer">

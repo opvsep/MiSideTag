@@ -62,6 +62,7 @@ import {
   type LyricCheckReport,
 } from "./lib/quality";
 import { extractHttpUrl } from "./lib/links";
+import { verifyAccount } from "./lib/accounts";
 import {
   saveLocalLyrics,
   saveOnlineLyrics,
@@ -76,6 +77,7 @@ import type {
   Song,
 } from "./types";
 import { SOURCE_SHORT, songKey } from "./types";
+import { normalizeCookie } from "./lib/utils";
 
 type Filter = "all" | ProviderSource;
 
@@ -129,6 +131,10 @@ export default function App() {
   const lyricsGeneration = useRef(0);
   const localCancel = useRef(false);
   const lyricsCache = useRef(new Map<string, Lyrics>());
+  const accountValidation = useRef<Record<ProviderSource, string>>({
+    netease: "",
+    qq: "",
+  });
   const karaokeStartedAt = useRef(0);
   const karaokeBaseMs = useRef(0);
   const demoBootstrapped = useRef(false);
@@ -172,6 +178,42 @@ export default function App() {
       // Browser preview and older runtimes keep the frontend-side profile.
     });
   }, [config.performance.highPerformance]);
+
+  useEffect(() => {
+    let disposed = false;
+    for (const source of ["netease", "qq"] as const) {
+      const cookie = normalizeCookie(config.cookies[source]);
+      if (!cookie) {
+        accountValidation.current[source] = "";
+        continue;
+      }
+      if (accountValidation.current[source] === cookie) continue;
+      accountValidation.current[source] = cookie;
+      void verifyAccount(source, cookie)
+        .then((account) => {
+          if (disposed) return;
+          setConfig((current) => {
+            if (normalizeCookie(current.cookies[source]) !== cookie) {
+              return current;
+            }
+            const next = {
+              ...current,
+              accounts: { ...current.accounts, [source]: account },
+            };
+            void persistConfig(next).catch(() => {
+              // Verification remains visible even when config persistence fails.
+            });
+            return next;
+          });
+        })
+        .catch(() => {
+          // A platform failure leaves the previous account state intact.
+        });
+    }
+    return () => {
+      disposed = true;
+    };
+  }, [config.cookies.netease, config.cookies.qq]);
 
   useEffect(() => {
     if (demoBootstrapped.current) return;
@@ -999,6 +1041,15 @@ export default function App() {
     setConfig(next);
   };
 
+  const verifyAccountForSettings = async (
+    source: ProviderSource,
+    cookie: string,
+  ) => {
+    const normalized = normalizeCookie(cookie);
+    accountValidation.current[source] = normalized;
+    return verifyAccount(source, normalized);
+  };
+
   const chooseDirectory = async (): Promise<string | null> => {
     const directory = await selectDirectory();
     return directory;
@@ -1102,6 +1153,7 @@ export default function App() {
               config={config}
               paths={paths}
               onSave={saveSettings}
+              onVerifyAccount={verifyAccountForSettings}
               onChooseDirectory={chooseDirectory}
               onOpenDataDirectory={openDataDirectory}
               onOpenWebsite={(source) => {

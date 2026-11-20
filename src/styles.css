@@ -2576,6 +2576,11 @@ button.feature-pill:hover {
   box-shadow: 0 0 8px rgba(47, 208, 138, 0.45);
 }
 
+.settings-account-main > i.warning {
+  background: #e2bc5c;
+  box-shadow: 0 0 8px rgba(226, 188, 92, 0.35);
+}
+
 .settings-account-v2 > p {
   margin: 11px 0;
   color: #687b86;

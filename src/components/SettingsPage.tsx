@@ -8,6 +8,7 @@ import {
   Plus,
   RotateCcw,
   Save,
+  ShieldCheck,
   Zap,
 } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -18,12 +19,17 @@ import {
   MIN_MATCH_CONCURRENCY,
   normalizeMatchingConcurrency,
 } from "../lib/concurrency";
-import { cookiePreview } from "../lib/utils";
+import { cookiePreview, normalizeCookie } from "../lib/utils";
+import type { AccountState } from "../types";
 
 interface SettingsPageProps {
   config: AppConfig;
   paths: AppPaths;
   onSave: (config: AppConfig) => Promise<void>;
+  onVerifyAccount: (
+    source: ProviderSource,
+    cookie: string,
+  ) => Promise<AccountState>;
   onChooseDirectory: () => Promise<string | null>;
   onOpenDataDirectory: () => void;
   onOpenWebsite: (source: ProviderSource) => void;
@@ -145,6 +151,7 @@ export function SettingsPage({
   config,
   paths,
   onSave,
+  onVerifyAccount,
   onChooseDirectory,
   onOpenDataDirectory,
   onOpenWebsite,
@@ -189,11 +196,30 @@ export function SettingsPage({
   };
 
   const saveCookie = async (source: ProviderSource) => {
+    const cookie = normalizeCookie(draft.cookies[source]);
+    if (!cookie) {
+      setStatus("请先填写 Cookie");
+      return;
+    }
     setSaving(true);
+    setStatus("正在验证账号…");
     try {
-      await onSave(draft);
+      const account = await onVerifyAccount(source, cookie);
+      const next: AppConfig = {
+        ...draft,
+        cookies: { ...draft.cookies, [source]: cookie },
+        accounts: { ...draft.accounts, [source]: account },
+      };
+      setDraft(next);
+      if (account.valid === false) {
+        setStatus(`验证失败：${account.detail}`);
+        return;
+      }
+      await onSave(next);
       setStatus(
-        `${source === "netease" ? "网易云音乐" : "QQ 音乐"} Cookie 已保存`,
+        account.valid
+          ? `登录成功：${account.nickname}`
+          : `Cookie 已保存，${account.detail}`,
       );
       setEditingAccount(null);
     } catch (error) {
@@ -227,6 +253,15 @@ export function SettingsPage({
             {(["netease", "qq"] as const).map((source) => {
               const isNetease = source === "netease";
               const hasCookie = Boolean(draft.cookies[source].trim());
+              const account = draft.accounts[source];
+              const accountLabel =
+                account.valid === true
+                  ? account.nickname || "已登录"
+                  : account.valid === false
+                    ? "登录已失效"
+                    : hasCookie
+                      ? "待验证"
+                      : "游客模式";
               return (
                 <article className="settings-account-v2" key={source}>
                   <div className="settings-account-main">
@@ -235,17 +270,25 @@ export function SettingsPage({
                     </span>
                     <div>
                       <strong>{isNetease ? "网易云音乐" : "QQ 音乐"}</strong>
-                      <span>
-                        {draft.accounts[source].nickname ||
-                          (hasCookie
-                            ? cookiePreview(draft.cookies[source])
-                            : "游客模式")}
-                      </span>
+                      <span>{accountLabel}</span>
                     </div>
-                    <i className={hasCookie ? "connected" : ""} />
+                    <i
+                      className={
+                        account.valid === true
+                          ? "connected"
+                          : hasCookie
+                            ? "warning"
+                            : ""
+                      }
+                    />
                   </div>
                   <p>
-                    公共搜索与歌词大多可直接使用；登录后可提升部分接口可用性。
+                    {account.valid === true
+                      ? `${account.vip ? "VIP 账号 · " : ""}${account.detail}`
+                      : hasCookie
+                        ? account.detail ||
+                          `已保存 ${cookiePreview(draft.cookies[source])}，等待验证`
+                        : "公共搜索与歌词大多可直接使用；登录后可使用账号权限。"}
                   </p>
                   <div className="settings-account-actions">
                     <button
@@ -289,11 +332,14 @@ export function SettingsPage({
                         <button
                           type="button"
                           className="primary-button"
-                          disabled={saving}
+                          disabled={
+                            saving ||
+                            !normalizeCookie(draft.cookies[source])
+                          }
                           onClick={() => void saveCookie(source)}
                         >
-                          <Save size={13} />
-                          保存 Cookie
+                          <ShieldCheck size={13} />
+                          {saving ? "验证中" : "验证并保存"}
                         </button>
                         <button
                           type="button"
