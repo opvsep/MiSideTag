@@ -46,5 +46,8 @@ jobs:
       - name: Test Rust backend
         run: cargo test --manifest-path src-tauri/Cargo.toml --locked
 
+      - name: Check Rust formatting
+        run: cargo fmt --manifest-path src-tauri/Cargo.toml -- --check
+
       - name: Lint Rust backend
         run: cargo clippy --manifest-path src-tauri/Cargo.toml --all-targets --locked -- -D warnings

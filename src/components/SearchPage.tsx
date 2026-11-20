@@ -17,18 +17,16 @@ import {
   X,
 } from "lucide-react";
 import { useEffect, useMemo, useRef } from "react";
-import type { Lyrics, ProviderSource, Song } from "../types";
+import type { Lyrics, ProviderFilter, Song } from "../types";
 import {
   SOURCE_COLOR,
   SOURCE_SHORT,
   artistText,
   songKey,
 } from "../types";
-import { fmtDuration } from "../lib/utils";
+import { fmtDuration, fmtLrcTime } from "../lib/utils";
 import { lyricStats } from "../lib/lyrics";
 import { SongCover } from "./SongCover";
-
-type Filter = "all" | ProviderSource;
 
 interface SearchPageProps {
   query: string;
@@ -37,8 +35,8 @@ interface SearchPageProps {
   onQuickSearch: (query: string) => void;
   searching: boolean;
   songs: Song[];
-  filter: Filter;
-  onFilterChange: (filter: Filter) => void;
+  filter: ProviderFilter;
+  onFilterChange: (filter: ProviderFilter) => void;
   selectedSong: Song | null;
   onSelectSong: (song: Song) => void;
   lyrics: Lyrics | null;
@@ -400,7 +398,7 @@ export function SearchPage({
                         onClick={() => onSeek(index)}
                       >
                         <span className="line-time">
-                          {formatLyricTime(line.startMs)}
+                          {fmtLrcTime(line.startMs)}
                         </span>
                         <span>
                           {line.text}
@@ -449,12 +447,4 @@ export function SearchPage({
       </aside>
     </div>
   );
-}
-
-function formatLyricTime(ms: number): string {
-  const total = Math.max(0, Math.trunc(ms / 10));
-  const minutes = Math.floor(total / 6000);
-  const seconds = Math.floor((total % 6000) / 100);
-  const hundredths = total % 100;
-  return `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}.${String(hundredths).padStart(2, "0")}`;
 }

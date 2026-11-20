@@ -10,6 +10,7 @@ import {
   DEFAULT_MATCH_CONCURRENCY,
   normalizeMatchingConcurrency,
 } from "./concurrency";
+import { object } from "./json";
 import { formatTemplate, basenameWithoutExtension } from "./utils";
 
 export const DEFAULT_CONFIG: AppConfig = {
@@ -61,59 +62,108 @@ function emptyAccount(): AccountState {
   };
 }
 
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return Boolean(value) && typeof value === "object" && !Array.isArray(value);
+function mergeAccount(target: AccountState, raw: unknown): void {
+  const account = object(raw);
+  if (!account) return;
+  if (typeof account.nickname === "string") target.nickname = account.nickname;
+  if (typeof account.avatar === "string") target.avatar = account.avatar;
+  if (typeof account.detail === "string") target.detail = account.detail;
+  if (typeof account.vip === "boolean") target.vip = account.vip;
+  if (typeof account.valid === "boolean" || account.valid === null) {
+    target.valid = account.valid;
+  }
 }
 
 export function mergeConfig(raw: unknown): AppConfig {
   const base = structuredClone(DEFAULT_CONFIG);
-  if (!isRecord(raw)) return base;
-  const config = raw;
-  if (isRecord(config.saving)) {
-    Object.assign(base.saving, config.saving);
-  }
-  if (isRecord(config.matching)) {
-    Object.assign(base.matching, config.matching);
-    base.matching.concurrency = normalizeMatchingConcurrency(
-      config.matching.concurrency,
-      DEFAULT_MATCH_CONCURRENCY,
-    );
-  }
-  if (isRecord(config.performance)) {
-    if (typeof config.performance.highPerformance === "boolean") {
-      base.performance.highPerformance = config.performance.highPerformance;
+  const config = object(raw);
+  if (!config) return base;
+  const saving = object(config.saving);
+  if (saving) {
+    if (saving.mode === "same" || saving.mode === "custom") {
+      base.saving.mode = saving.mode;
     }
-  }
-  if (isRecord(config.cookies)) {
-    if (typeof config.cookies.netease === "string") {
-      base.cookies.netease = config.cookies.netease;
+    if (typeof saving.customDir === "string") {
+      base.saving.customDir = saving.customDir;
     }
-    if (typeof config.cookies.qq === "string") {
-      base.cookies.qq = config.cookies.qq;
+    if (typeof saving.template === "string") {
+      base.saving.template = saving.template;
     }
-  }
-  if (isRecord(config.accounts)) {
-    for (const source of ["netease", "qq"] as const) {
-      if (isRecord(config.accounts[source])) {
-        Object.assign(base.accounts[source], config.accounts[source]);
+    for (const key of [
+      "includeTranslation",
+      "writeLrc",
+      "embedTags",
+      "overwrite",
+      "enhancedLrc",
+      "bom",
+    ] as const) {
+      if (typeof saving[key] === "boolean") {
+        base.saving[key] = saving[key];
       }
     }
   }
-  if (isRecord(config.ui) && typeof config.ui.scale === "string") {
-    if (["system", "100", "125", "150"].includes(config.ui.scale)) {
-      base.ui.scale = config.ui.scale as AppConfig["ui"]["scale"];
-    }
-  }
-  if (isRecord(config.search)) {
-    if (typeof config.search.lastQuery === "string") {
-      base.search.lastQuery = config.search.lastQuery;
+  const matching = object(config.matching);
+  if (matching) {
+    if (
+      matching.prefer === "auto" ||
+      matching.prefer === "netease" ||
+      matching.prefer === "qq"
+    ) {
+      base.matching.prefer = matching.prefer;
     }
     if (
-      typeof config.search.defaultSource === "string" &&
-      ["all", "netease", "qq"].includes(config.search.defaultSource)
+      matching.sensitivity === "strict" ||
+      matching.sensitivity === "balanced" ||
+      matching.sensitivity === "loose"
+    ) {
+      base.matching.sensitivity = matching.sensitivity;
+    }
+    if (typeof matching.autoFetchLyrics === "boolean") {
+      base.matching.autoFetchLyrics = matching.autoFetchLyrics;
+    }
+    base.matching.concurrency = normalizeMatchingConcurrency(
+      matching.concurrency,
+      DEFAULT_MATCH_CONCURRENCY,
+    );
+  }
+  const performance = object(config.performance);
+  if (performance) {
+    if (typeof performance.highPerformance === "boolean") {
+      base.performance.highPerformance = performance.highPerformance;
+    }
+  }
+  const cookies = object(config.cookies);
+  if (cookies) {
+    if (typeof cookies.netease === "string") {
+      base.cookies.netease = cookies.netease;
+    }
+    if (typeof cookies.qq === "string") {
+      base.cookies.qq = cookies.qq;
+    }
+  }
+  const accounts = object(config.accounts);
+  if (accounts) {
+    for (const source of ["netease", "qq"] as const) {
+      mergeAccount(base.accounts[source], accounts[source]);
+    }
+  }
+  const ui = object(config.ui);
+  if (ui && typeof ui.scale === "string") {
+    if (["system", "100", "125", "150"].includes(ui.scale)) {
+      base.ui.scale = ui.scale as AppConfig["ui"]["scale"];
+    }
+  }
+  const search = object(config.search);
+  if (search) {
+    if (typeof search.lastQuery === "string") {
+      base.search.lastQuery = search.lastQuery;
+    }
+    if (
+      typeof search.defaultSource === "string" &&
+      ["all", "netease", "qq"].includes(search.defaultSource)
     ) {
       base.search.defaultSource =
-        config.search.defaultSource as AppConfig["search"]["defaultSource"];
+        search.defaultSource as AppConfig["search"]["defaultSource"];
     }
   }
   return base;

@@ -2,6 +2,7 @@ import type {
   LocalMatch,
   LocalTrack,
   MatchCandidate,
+  MatchingSensitivity,
   Song,
 } from "../types";
 import { artistText, songKey } from "../types";
@@ -13,22 +14,65 @@ import {
   splitArtists,
 } from "./utils";
 
-export interface MatchThreshold {
+interface MatchThreshold {
   score: number;
   margin: number;
   review: number;
 }
 
-export const THRESHOLDS: Record<string, MatchThreshold> = {
+const THRESHOLDS: Record<MatchingSensitivity, MatchThreshold> = {
   strict: { score: 90, margin: 15, review: 55 },
   balanced: { score: 80, margin: 10, review: 45 },
   loose: { score: 68, margin: 6, review: 35 },
 };
 
+const TITLE_VERSION_MARKERS: Array<[RegExp, string]> = [
+  [/\blive\b|ライブ|现场版|現場版/gi, "live"],
+  [
+    /\binstrumental\b|\binst\.?(?=\s|$)|インスト(?:ゥルメンタル)?|伴奏|純音樂|纯音乐/gi,
+    "instrumental",
+  ],
+  [/\bkaraoke\b|カラオケ|卡拉\s*ok/gi, "karaoke"],
+  [/\bcover\b|カバー|翻唱/gi, "cover"],
+  [/\bremix\b|リミックス|混音版?/gi, "remix"],
+  [/\bdemo\b|デモ/gi, "demo"],
+  [/\bacoustic\b|アコースティック|不插电/gi, "acoustic"],
+  [/\bremaster(?:ed)?\b|リマスター|重制版?|母带重制/gi, "remaster"],
+  [/\bextended\b|加长版|拡張版/gi, "extended"],
+  [/\bsped\s*up\b|\bspeed\s*up\b|nightcore|加速版|高速版/gi, "speed-up"],
+  [/\bslowed(?:\s*down)?\b|减速版|減速版|慢速版/gi, "slowed-down"],
+  [
+    /\bradio\s*edit\b|\btv\s*(?:size|edit)\b|\bshort\s*(?:version|edit)\b|\bedit(?:ed)?\b|ショート(?:サイズ|エディット)|剪辑版|剪輯版/gi,
+    "edit",
+  ],
+  [
+    /\benglish\b|\bjapanese\b|\bchinese\b|\bmandarin\b|\bcantonese\b|英语版?|英語版?|日语版?|日語版?|中文版?|国语版?|國語版?|粤语版?|粵語版?/gi,
+    "language",
+  ],
+  [/\bopening\b|\bop(?:ening)?\s*(?:ver(?:sion)?\.?)?|オープニング|片头曲/gi, "opening"],
+  [/\bending\b|\bed(?:ing)?\s*(?:ver(?:sion)?\.?)?|エンディング|片尾曲/gi, "ending"],
+];
+
+function canonicalTitle(value: string): string {
+  return normalizeText(normalizeLoose(value)) || normalizeText(value);
+}
+
+function titleVersionSignature(value: string): string {
+  const normalized = value.normalize("NFKC").toLocaleLowerCase();
+  const markers = new Set<string>();
+  for (const [pattern, marker] of TITLE_VERSION_MARKERS) {
+    if (normalized.match(pattern)) markers.add(marker);
+  }
+  return [...markers].sort().join("|");
+}
+
 function artists(value: string): Set<string> {
   return new Set(
     splitArtists(value)
-      .map(normalizeText)
+      .map(
+        (part) =>
+          normalizeText(normalizeLoose(part)) || normalizeText(part),
+      )
       .filter(Boolean),
   );
 }
@@ -61,6 +105,11 @@ export function scoreCandidate(
 ): MatchCandidate {
   const titleNorm = normalizeText(track.title);
   const songTitle = normalizeText(song.title);
+  const baseTitleNorm = canonicalTitle(track.title);
+  const baseSongTitle = canonicalTitle(song.title);
+  const sameVersion =
+    titleVersionSignature(track.title) ===
+    titleVersionSignature(song.title);
   const artistNorm = artists(track.artist);
   const songArtists = artists(artistText(song));
   const albumNorm = normalizeText(track.album);
@@ -83,17 +132,40 @@ export function scoreCandidate(
       );
   }
 
+  const titledIdentically =
+    Boolean(titleNorm) && titleNorm === songTitle;
+  const bracketedAliasMatch =
+    sameVersion &&
+    Boolean(baseTitleNorm) &&
+    baseTitleNorm === baseSongTitle &&
+    titleNorm !== songTitle;
   const exactTitle =
-    Boolean(titleNorm) && (titleNorm === songTitle || combinedFilenameMatch);
+    titledIdentically || bracketedAliasMatch || combinedFilenameMatch;
   const titleRatio =
-    titleNorm && songTitle ? sequenceRatio(titleNorm, songTitle) : 0;
+    titleNorm && songTitle
+      ? Math.max(
+          sequenceRatio(titleNorm, songTitle),
+          sameVersion && baseTitleNorm && baseSongTitle
+            ? sequenceRatio(baseTitleNorm, baseSongTitle)
+            : 0,
+        )
+      : 0;
   let score: number;
   if (exactTitle) {
     score = 55;
     reasons.push(
-      combinedFilenameMatch ? "文件名匹配歌名+歌手" : "歌名一致",
+      combinedFilenameMatch
+        ? "文件名匹配歌名+歌手"
+        : bracketedAliasMatch
+          ? "歌名一致（忽略括号注释）"
+          : "歌名一致",
     );
-  } else if (titleNorm && songTitle && songTitle.includes(titleNorm)) {
+  } else if (
+    titleNorm &&
+    songTitle &&
+    songTitle.includes(titleNorm) &&
+    sameVersion
+  ) {
     score = 24;
     reasons.push("歌名包含");
   } else if (titleRatio >= 0.72) {
@@ -182,7 +254,11 @@ export function rankCandidates(
 
 function identityGroup(candidate: MatchCandidate): string {
   const names = [...artists(artistText(candidate.song))].sort().join("|");
-  return `${normalizeText(candidate.song.title)}\0${names}`;
+  return [
+    canonicalTitle(candidate.song.title),
+    titleVersionSignature(candidate.song.title),
+    names,
+  ].join("\0");
 }
 
 function sameRecording(
@@ -198,11 +274,11 @@ function sameRecording(
 
 export function chooseAutomatic(
   candidates: MatchCandidate[],
-  sensitivity: keyof typeof THRESHOLDS | string = "balanced",
+  sensitivity: MatchingSensitivity = "balanced",
 ): MatchCandidate | null {
   const top = candidates[0];
   if (!top) return null;
-  const threshold = THRESHOLDS[sensitivity] ?? THRESHOLDS.balanced;
+  const threshold = THRESHOLDS[sensitivity];
   if (!top.reliable || top.score < threshold.score) return null;
   for (const other of candidates.slice(1)) {
     if (sameRecording(top, other)) continue;
@@ -289,7 +365,7 @@ export function rankVariants(
 export function finalizeMatch(
   track: LocalTrack,
   candidates: MatchCandidate[],
-  sensitivity: string,
+  sensitivity: MatchingSensitivity,
   warnings: string[] = [],
   pairingPlatform: "auto" | "netease" | "qq" = "auto",
 ): LocalMatch {
@@ -312,7 +388,7 @@ export function finalizeMatch(
               candidate.song.id !== preferredTop.song.id,
           ),
         ];
-  const threshold = THRESHOLDS[sensitivity] ?? THRESHOLDS.balanced;
+  const threshold = THRESHOLDS[sensitivity];
   const result: LocalMatch = {
     track,
     candidates: orderedCandidates,

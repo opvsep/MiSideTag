@@ -1,5 +1,11 @@
 import type { AccountState, ProviderSource } from "../types";
 import { httpRequest } from "./bridge";
+import {
+  numberValue,
+  object,
+  parseJson,
+  stringValue,
+} from "./json";
 import { normalizeCookie, parseCookie } from "./utils";
 
 const USER_AGENT =
@@ -16,26 +22,6 @@ function emptyAccount(
     valid,
     detail,
   };
-}
-
-function object(value: unknown): Record<string, unknown> | null {
-  return value && typeof value === "object" && !Array.isArray(value)
-    ? (value as Record<string, unknown>)
-    : null;
-}
-
-function stringValue(value: unknown): string {
-  return typeof value === "string" ? value : "";
-}
-
-function numberValue(value: unknown): number {
-  return typeof value === "number" ? value : Number(value) || 0;
-}
-
-function parseJson(text: string): unknown {
-  const trimmed = text.trim();
-  const match = trimmed.match(/^[\w$.]+\s*\(([\s\S]*)\)\s*;?$/);
-  return JSON.parse(match ? match[1] : trimmed) as unknown;
 }
 
 async function requestJson(

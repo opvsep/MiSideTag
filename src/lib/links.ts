@@ -1,4 +1,4 @@
-export interface SongLinkIdentifiers {
+interface SongLinkIdentifiers {
   neteaseId: string;
   qqMid: string;
   qqNumericId: string;

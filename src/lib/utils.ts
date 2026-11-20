@@ -250,16 +250,19 @@ export function fmtDuration(ms: number): string {
 
 export function fmtLrcTime(ms: number): string {
   const safe = Math.max(0, Math.trunc(ms));
-  const minutes = Math.floor(safe / 60_000);
-  const seconds = (safe % 60_000) / 1000;
-  return `${String(minutes).padStart(2, "0")}:${seconds.toFixed(2).padStart(5, "0")}`;
+  const centiseconds = Math.floor(safe / 10);
+  const minutes = Math.floor(centiseconds / 6000);
+  const seconds = Math.floor((centiseconds % 6000) / 100);
+  const fraction = centiseconds % 100;
+  return `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}.${String(fraction).padStart(2, "0")}`;
 }
 
 export function fmtSplTime(ms: number): string {
   const safe = Math.max(0, Math.trunc(ms));
   const minutes = Math.floor(safe / 60_000);
-  const seconds = (safe % 60_000) / 1000;
-  return `${String(minutes).padStart(2, "0")}:${seconds.toFixed(3).padStart(6, "0")}`;
+  const seconds = Math.floor((safe % 60_000) / 1000);
+  const milliseconds = safe % 1000;
+  return `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}.${String(milliseconds).padStart(3, "0")}`;
 }
 
 export function songText(song: Song): string {

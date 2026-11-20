@@ -171,12 +171,9 @@ fn save_config(config: Value) -> Result<(), String> {
 
 #[tauri::command]
 fn select_audio_files() -> Vec<String> {
-    let extensions = [
-        "mp3", "flac", "m4a", "mp4", "ogg", "opus", "oga", "wav", "aiff", "aif", "ape", "wv",
-    ];
     rfd::FileDialog::new()
         .set_title("添加音乐文件")
-        .add_filter("音频文件", &extensions)
+        .add_filter("音频文件", AUDIO_EXTENSIONS)
         .pick_files()
         .unwrap_or_default()
         .into_iter()
@@ -232,7 +229,7 @@ async fn http_request(
     }
     let mut builder = state
         .client()
-        .request(method.clone(), &request.url)
+        .request(method, &request.url)
         .headers(headers);
     if let Some(body) = request.body {
         builder = builder.body(body);

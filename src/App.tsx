@@ -73,6 +73,7 @@ import type {
   LocalMatch,
   Lyrics,
   MatchCandidate,
+  ProviderFilter,
   ProviderSource,
   Song,
 } from "./types";
@@ -82,8 +83,6 @@ import {
   RESULTS_PER_PLATFORM,
   TOTAL_RESULTS,
 } from "./lib/searchLimits";
-
-type Filter = "all" | ProviderSource;
 
 interface ToastState {
   tone: "info" | "success" | "error";
@@ -107,7 +106,7 @@ export default function App() {
   const [paths, setPaths] = useState<AppPaths>(EMPTY_PATHS);
   const [page, setPage] = useState<Page>("search");
   const [query, setQuery] = useState("");
-  const [filter, setFilter] = useState<Filter>("all");
+  const [filter, setFilter] = useState<ProviderFilter>("all");
   const [songs, setSongs] = useState<Song[]>([]);
   const [selectedSong, setSelectedSong] = useState<Song | null>(null);
   const [lyrics, setLyrics] = useState<Lyrics | null>(null);
@@ -812,7 +811,7 @@ export default function App() {
   const searchLocalCandidates = async (
     row: number,
     customQuery: string,
-    sourceFilter: Filter,
+    sourceFilter: ProviderFilter,
     page = 1,
     appendExisting = false,
   ): Promise<{
@@ -1066,11 +1065,6 @@ export default function App() {
     return verifyAccount(source, normalized);
   };
 
-  const chooseDirectory = async (): Promise<string | null> => {
-    const directory = await selectDirectory();
-    return directory;
-  };
-
   const openDataDirectory = () => {
     void openPath(paths.dataDir).catch((error) =>
       notify("error", error instanceof Error ? error.message : String(error)),
@@ -1170,7 +1164,7 @@ export default function App() {
               paths={paths}
               onSave={saveSettings}
               onVerifyAccount={verifyAccountForSettings}
-              onChooseDirectory={chooseDirectory}
+              onChooseDirectory={selectDirectory}
               onOpenDataDirectory={openDataDirectory}
               onOpenWebsite={(source) => {
                 void openExternalUrl(

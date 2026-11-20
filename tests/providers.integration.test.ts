@@ -7,12 +7,13 @@ import {
 } from "../src/lib/providers";
 
 const runNetwork = process.env.RUN_NETWORK === "1";
+const BOTH_PROVIDER_QUERY = "周杰伦 夜曲";
 
 describe.skipIf(!runNetwork)("provider integration", () => {
   it(
     "searches both providers and fetches at least one lyric document",
     async () => {
-      const result = await searchAll("Duvet boa", { limit: 5 });
+      const result = await searchAll(BOTH_PROVIDER_QUERY, { limit: 5 });
       expect(result.songs.length, result.warnings.join("\n")).toBeGreaterThan(0);
       expect(
         result.bySource.netease?.length,
@@ -54,7 +55,7 @@ describe.skipIf(!runNetwork)("provider integration", () => {
   it(
     "fetches a QQ lyric document",
     async () => {
-      const songs = await searchQq("Duvet boa", "", 3, 1);
+      const songs = await searchQq(BOTH_PROVIDER_QUERY, "", 3, 1);
       expect(songs.length).toBeGreaterThan(0);
       const lyrics = await fetchLyrics(songs[0]);
       expect(lyrics.lines.length).toBeGreaterThan(0);

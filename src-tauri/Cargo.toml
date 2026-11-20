@@ -1,7 +1,7 @@
 [package]
 name = "misidetag-tauri-ts"
-version = "2.1.0"
-description = "MiSideTag desktop lyrics matcher built with Tauri, React and TypeScript"
+version = "2.2.0"
+description = "MiSideTag 2.2 desktop lyrics matcher built with Tauri, React and TypeScript"
 authors = ["MiSideTag contributors"]
 edition = "2024"
 license = "GPL-3.0-only"

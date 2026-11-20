@@ -10,15 +10,13 @@ import { useMemo, useState } from "react";
 import type {
   LocalMatch,
   MatchCandidate,
-  ProviderSource,
+  ProviderFilter,
 } from "../types";
 import { SOURCE_COLOR, SOURCE_SHORT, artistText } from "../types";
 import { fmtDuration } from "../lib/utils";
 import { extractHttpUrl } from "../lib/links";
 import { RESULTS_PER_PLATFORM } from "../lib/searchLimits";
 import { SongCover } from "./SongCover";
-
-type Filter = "all" | ProviderSource;
 
 interface SearchResponse {
   candidates: MatchCandidate[];
@@ -28,13 +26,13 @@ interface SearchResponse {
 
 interface CandidateDialogProps {
   match: LocalMatch;
-  defaultSource: Filter;
+  defaultSource: ProviderFilter;
   loading: boolean;
   onClose: () => void;
   onSelect: (candidate: MatchCandidate) => void;
   onSearch: (
     query: string,
-    source: Filter,
+    source: ProviderFilter,
     page: number,
     appendExisting: boolean,
   ) => Promise<SearchResponse>;
@@ -57,7 +55,7 @@ export function CandidateDialog({
     .filter(Boolean)
     .join(" ");
   const [query, setQuery] = useState(initialQuery);
-  const [filter, setFilter] = useState<Filter>(defaultSource);
+  const [filter, setFilter] = useState<ProviderFilter>(defaultSource);
   const [results, setResults] = useState(match.candidates);
   const [searching, setSearching] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
@@ -96,6 +94,9 @@ export function CandidateDialog({
   const selectedCandidate = results.find(
     (candidate) => candidateKey(candidate) === selected,
   );
+  const footerSelection = selectedCandidate
+    ? `已选择：${selectedCandidate.song.title} — ${artistText(selectedCandidate.song)} · ${SOURCE_SHORT[selectedCandidate.song.source]}`
+    : "点击候选项立即应用并关闭窗口";
 
   const runSearch = async (reset: boolean) => {
     if (!query.trim() || searching || loadingMore) return;
@@ -142,14 +143,17 @@ export function CandidateDialog({
   };
 
   return (
-    <div className="modal-backdrop" onMouseDown={onClose}>
+    <div className="modal-backdrop candidate-backdrop" onMouseDown={onClose}>
       <div
         className="modal candidate-dialog candidate-match-dialog"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="candidate-dialog-title"
         onMouseDown={(event) => event.stopPropagation()}
       >
         <header className="candidate-window-title">
           <img src="/assets/logo_32.png" alt="" />
-          <span>选择匹配的歌词</span>
+          <span id="candidate-dialog-title">选择匹配的歌词</span>
           <button type="button" className="icon-only" onClick={onClose}>
             <X size={17} />
           </button>
@@ -303,11 +307,7 @@ export function CandidateDialog({
         </div>
 
         <footer className="candidate-match-footer">
-          <span>
-            {selectedCandidate
-              ? `点击候选项将立即应用：${selectedCandidate.song.title} — ${artistText(selectedCandidate.song)} · ${SOURCE_SHORT[selectedCandidate.song.source]}`
-              : "点击候选项即可应用并关闭窗口"}
-          </span>
+          <span title={footerSelection}>{footerSelection}</span>
           <button type="button" className="text-button" onClick={onClose}>
             取消
           </button>

@@ -1,4 +1,6 @@
 export type ProviderSource = "netease" | "qq";
+export type ProviderFilter = "all" | ProviderSource;
+export type MatchingSensitivity = "strict" | "balanced" | "loose";
 
 export interface Song {
   source: ProviderSource;
@@ -97,7 +99,7 @@ export interface SavingSettings {
 
 export interface MatchingSettings {
   prefer: "auto" | ProviderSource;
-  sensitivity: "strict" | "balanced" | "loose";
+  sensitivity: MatchingSensitivity;
   autoFetchLyrics: boolean;
   concurrency: number;
 }
@@ -124,7 +126,7 @@ export interface AppConfig {
   };
   search: {
     lastQuery: string;
-    defaultSource: "all" | ProviderSource;
+    defaultSource: ProviderFilter;
   };
 }
 

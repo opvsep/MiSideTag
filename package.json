@@ -1,8 +1,8 @@
 {
   "name": "misidetag-tauri-ts",
   "private": true,
-  "version": "2.1.0",
-  "description": "MiSideTag desktop lyrics matcher built with Tauri, React and TypeScript",
+  "version": "2.2.0",
+  "description": "MiSideTag 2.2 desktop lyrics matcher built with Tauri, React and TypeScript",
   "packageManager": "pnpm@11.25.0",
   "type": "module",
   "scripts": {

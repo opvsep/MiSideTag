@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
   formatTemplate,
+  fmtLrcTime,
+  fmtSplTime,
   guessTitleArtist,
   normalizeCookie,
   normalizeText,
@@ -45,5 +47,11 @@ describe("utils", () => {
         artist: "周杰伦",
       }),
     ).toBe("夜曲 - 周杰伦");
+  });
+
+  it("formats lyric timestamps without minute rollover", () => {
+    expect(fmtLrcTime(61_234)).toBe("01:01.23");
+    expect(fmtLrcTime(59_999)).toBe("00:59.99");
+    expect(fmtSplTime(59_999)).toBe("00:59.999");
   });
 });

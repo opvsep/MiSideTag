@@ -12,7 +12,7 @@ import {
 } from "./config";
 import { formatLrc } from "./lyrics";
 
-export interface SaveResult {
+interface SaveResult {
   lrcPath: string;
   embedded: boolean;
   errors: string[];

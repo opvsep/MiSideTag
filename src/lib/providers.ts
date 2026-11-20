@@ -1,12 +1,20 @@
 import type {
   HttpResponse,
   Lyrics,
+  ProviderFilter,
   ProviderSource,
   Song,
 } from "../types";
 import { decryptQrc } from "qrc-decoder";
 import { artistText } from "../types";
 import { httpRequest } from "./bridge";
+import {
+  array,
+  numberValue,
+  object,
+  parseJson,
+  stringValue,
+} from "./json";
 import {
   mergeFieldByTime,
   mergeTranslation,
@@ -36,44 +44,6 @@ const USER_AGENT =
   "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
 const QQ_COVER =
   "https://y.gtimg.cn/music/photo_new/T002R300x300M000{albummid}.jpg?max_age=2592000";
-
-function object(value: unknown): Record<string, unknown> | null {
-  return value && typeof value === "object" && !Array.isArray(value)
-    ? (value as Record<string, unknown>)
-    : null;
-}
-
-function array(value: unknown): unknown[] {
-  return Array.isArray(value) ? value : [];
-}
-
-function stringValue(value: unknown): string {
-  return typeof value === "string"
-    ? value
-    : typeof value === "number"
-      ? String(value)
-      : "";
-}
-
-function numberValue(value: unknown): number {
-  if (typeof value === "number" && Number.isFinite(value)) return value;
-  if (typeof value === "string") {
-    const parsed = Number(value);
-    return Number.isFinite(parsed) ? parsed : 0;
-  }
-  return 0;
-}
-
-function stripJsonp(text: string): string {
-  const trimmed = text.trim();
-  if (trimmed.startsWith("{") || trimmed.startsWith("[")) return trimmed;
-  const match = trimmed.match(/^[\w$.]+\s*\(([\s\S]*)\)\s*;?$/);
-  return match ? match[1].trim() : trimmed;
-}
-
-function parseJson<T = unknown>(text: string): T {
-  return JSON.parse(stripJsonp(text)) as T;
-}
 
 async function requestJson(
   url: string,
@@ -616,7 +586,7 @@ export async function searchAll(
   keyword: string,
   options: {
     cookies?: Partial<Record<ProviderSource, string>>;
-    source?: "all" | ProviderSource;
+    source?: ProviderFilter;
     limit?: number;
     page?: number;
   } = {},

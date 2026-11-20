@@ -51,6 +51,45 @@ describe("matching", () => {
     expect(candidate.reliable).toBe(false);
   });
 
+  it("matches translated title aliases and romanized artist aliases", () => {
+    const candidate = scoreCandidate(
+      track({
+        title: "アイドル",
+        artist: "YOASOBI",
+        album: "",
+        durationMs: 213000,
+      }),
+      song({
+        title: "アイドル (偶像)",
+        artists: ["YOASOBI（ヨアソビ）"],
+        album: "アイドル (偶像)",
+        durationMs: 213000,
+      }),
+    );
+    expect(candidate.score).toBe(95);
+    expect(candidate.reliable).toBe(true);
+    expect(candidate.reasons).toContain("歌手一致");
+  });
+
+  it("does not confuse a different recording version with a title alias", () => {
+    const candidate = scoreCandidate(
+      track({
+        title: "アイドル",
+        artist: "YOASOBI",
+        album: "",
+        durationMs: 213000,
+      }),
+      song({
+        title: "アイドル (Live)",
+        artists: ["YOASOBI"],
+        album: "アイドル (Live)",
+        durationMs: 213000,
+      }),
+    );
+    expect(candidate.score).toBeLessThan(80);
+    expect(candidate.reliable).toBe(false);
+  });
+
   it("treats cross-platform duplicates as the same recording", () => {
     const first = scoreCandidate(
       track(),
@@ -58,6 +97,42 @@ describe("matching", () => {
     );
     const second = scoreCandidate(track(), song());
     expect(chooseAutomatic([first, second], "balanced")).not.toBeNull();
+  });
+
+  it("treats translated title aliases as the same recording across providers", () => {
+    const first = scoreCandidate(
+      track({
+        title: "アイドル",
+        artist: "YOASOBI",
+        album: "",
+        durationMs: 213000,
+      }),
+      song({
+        source: "netease",
+        id: "ne-alias",
+        title: "アイドル (偶像)",
+        artists: ["YOASOBI（ヨアソビ）"],
+        album: "",
+        durationMs: 213000,
+      }),
+    );
+    const second = scoreCandidate(
+      track({
+        title: "アイドル",
+        artist: "YOASOBI",
+        album: "",
+        durationMs: 213000,
+      }),
+      song({
+        source: "qq",
+        id: "qq-alias",
+        title: "アイドル",
+        artists: ["YOASOBI"],
+        album: "",
+        durationMs: 213000,
+      }),
+    );
+    expect(chooseAutomatic([second, first], "balanced")).not.toBeNull();
   });
 
   it("ranks the exact result first", () => {

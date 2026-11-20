@@ -1,10 +1,10 @@
-# MiSideTag TS
+# MiSideTag 2.2
 
-MiSideTag TS 是一款面向 Windows 的歌词搜索、匹配与本地整理工具。应用基于
+MiSideTag 2.2 是一款面向 Windows 的歌词搜索、匹配与本地整理工具。应用基于
 **Tauri 2、React 和 TypeScript** 构建，支持网易云音乐与 QQ 音乐双平台搜索，
 可将歌词保存为 LRC / SPL 文件，或直接写入本地音频标签。
 
-当前版本：**2.1.0**
+当前正式版：**2.2.0**
 
 ## 主要能力
 
@@ -32,9 +32,12 @@ MiSideTag TS 是一款面向 Windows 的歌词搜索、匹配与本地整理工�
 - 支持拖放导入并自动去重
 - 支持 MP3、FLAC、M4A、MP4、OGG、OPUS、OGA、WAV、AIFF、APE、WV
 - 根据歌名、歌手、专辑和时长进行多平台候选评分
+- 兼容标题翻译括号与歌手罗马音/本地名别名
+- 区分现场、伴奏、翻唱、混音和语言版本，降低错误匹配
 - 自动匹配采用“默认配对平台”的最高分结果
 - 搜索后显示“待确认”，手动选择后显示“准备就绪”，保存成功显示“完毕”
 - 点击候选项立即应用并关闭候选窗口
+- 长标题、高 DPI 和窄窗口下保持底部操作按钮完整可见
 - 本地候选搜索与歌词搜索统一为每平台 30 条
 - 支持 1～10 首歌曲并发匹配
 
@@ -71,7 +74,8 @@ MiSideTag TS 是一款面向 Windows 的歌词搜索、匹配与本地整理工�
 src/
   components/   React 界面组件
   lib/          搜索、账号验证、歌词解析、匹配与性能控制
-  types.ts      公共数据类型
+  lib/json.ts   平台 JSON / JSONP 与松散字段解析
+  types.ts      公共领域类型与平台常量
 
 src-tauri/
   src/lib.rs    HTTP 传输、文件选择、配置写入和音频标签处理
@@ -140,8 +144,8 @@ pnpm vitest run tests/providers.integration.test.ts tests/cover-diagnostic.integ
 输出：
 
 ```text
-release/MiSideTag-TS-2.1.0-win64/
-release/MiSideTag-TS-2.1.0-win64.zip
+release/MiSideTag-TS-2.2.0-win64/
+release/MiSideTag-TS-2.2.0-win64.zip
 release/SHA256SUMS.txt
 ```
 
