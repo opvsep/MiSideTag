@@ -29,4 +29,17 @@ describe.skipIf(!runNetwork)("music link resolution", () => {
     },
     30_000,
   );
+
+  it(
+    "resolves the provided QQ short share link",
+    async () => {
+      const song = await resolveSongLink(
+        "https://c6.y.qq.com/base/fcgi-bin/u?__=YzHdUgxf0r0N",
+      );
+      expect(song?.source).toBe("qq");
+      expect(song?.title).toBe("Duvet");
+      expect(song?.mid).toBe("001OXeBs0IDw5V");
+    },
+    30_000,
+  );
 });

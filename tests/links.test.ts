@@ -37,6 +37,11 @@ describe("music share links", () => {
         "分享歌曲 https://i.y.qq.com/v8/playsong.html?songmid=002r5oUz2VI3TT&source=qq",
       ).qqMid,
     ).toBe("002r5oUz2VI3TT");
+    expect(
+      extractSongLinkIdentifiers(
+        "https://i.y.qq.com/v8/playsong.html?songid=108363223&source=qq",
+      ).qqNumericId,
+    ).toBe("108363223");
   });
 
   it("recognizes IDs from redirected page text", () => {
@@ -45,5 +50,13 @@ describe("music share links", () => {
         'https://y.qq.com/n/ryqq/songDetail/00367xJN0gRPnV{"songMid":"00367xJN0gRPnV"}',
       ).qqMid,
     ).toBe("00367xJN0gRPnV");
+  });
+
+  it("distinguishes numeric QQ song details from songmid routes", () => {
+    expect(
+      extractSongLinkIdentifiers(
+        "https://y.qq.com/n/ryqq_v2/songDetail/108363223?ADTAG=h5_play_song",
+      ).qqNumericId,
+    ).toBe("108363223");
   });
 });

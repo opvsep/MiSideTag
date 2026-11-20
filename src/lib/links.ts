@@ -1,6 +1,7 @@
 export interface SongLinkIdentifiers {
   neteaseId: string;
   qqMid: string;
+  qqNumericId: string;
 }
 
 const URL_PATTERN = /https?:\/\/[^\s<>"'“”]+/i;
@@ -28,20 +29,33 @@ export function extractSongLinkIdentifiers(text: string): SongLinkIdentifiers {
         /(?:[?&#](?:id|songid)=|\/song\/)(\d{5,})/i,
       )?.[1] || ""
     : "";
-  const qqMid = qqContext
-    ? normalized.match(
+  let qqMid = "";
+  let qqNumericId = "";
+  if (qqContext) {
+    const qqRouteId =
+      normalized.match(
         /(?:songDetail|song)\/([A-Za-z0-9]{8,})/i,
+      )?.[1] || "";
+    if (/^\d+$/.test(qqRouteId)) qqNumericId = qqRouteId;
+    else qqMid = qqRouteId;
+
+    qqNumericId ||=
+      normalized.match(/[?&#](?:songid|songId)=(\d+)/i)?.[1] ||
+      normalized.match(
+        /["'](?:songid|songId)["']\s*:\s*(\d+)/i,
       )?.[1] ||
+      "";
+    qqMid ||=
       normalized.match(
         /[?&#](?:songmid|songMid|mid)=([A-Za-z0-9]{8,})/i,
       )?.[1] ||
       normalized.match(
         /["'](?:songmid|songMid|mid)["']\s*:\s*["']([A-Za-z0-9]{8,})["']/i,
       )?.[1] ||
-      ""
-    : "";
+      "";
+  }
 
-  return { neteaseId, qqMid };
+  return { neteaseId, qqMid, qqNumericId };
 }
 
 function normalizeShareText(text: string): string {

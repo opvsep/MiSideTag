@@ -1061,12 +1061,22 @@ export async function resolveSongLink(
   const trimmed = text.trim();
   if (!trimmed) return null;
   let identifiers = extractSongLinkIdentifiers(trimmed);
-  if (!identifiers.neteaseId && !identifiers.qqMid && /^\d{5,}$/.test(trimmed)) {
-    identifiers = { neteaseId: trimmed, qqMid: "" };
+  if (
+    !identifiers.neteaseId &&
+    !identifiers.qqMid &&
+    !identifiers.qqNumericId &&
+    /^\d{5,}$/.test(trimmed)
+  ) {
+    identifiers = { neteaseId: trimmed, qqMid: "", qqNumericId: "" };
   }
 
   const sharedUrl = extractHttpUrl(trimmed);
-  if (!identifiers.neteaseId && !identifiers.qqMid && sharedUrl) {
+  if (
+    !identifiers.neteaseId &&
+    !identifiers.qqMid &&
+    !identifiers.qqNumericId &&
+    sharedUrl
+  ) {
     try {
       const response = await httpRequest({ url: sharedUrl });
       identifiers = extractSongLinkIdentifiers(
@@ -1098,14 +1108,15 @@ export async function resolveSongLink(
       raw,
     };
   }
-  if (identifiers.qqMid) {
+  if (identifiers.qqMid || identifiers.qqNumericId) {
     const params = new URLSearchParams({
-      songmid: identifiers.qqMid,
       format: "json",
       platform: "yqq",
       needNewCode: "0",
       outCharset: "utf-8",
     });
+    if (identifiers.qqMid) params.set("songmid", identifiers.qqMid);
+    else params.set("songid", identifiers.qqNumericId);
     const data = await requestJson(
       `https://c.y.qq.com/v8/fcg-bin/fcg_play_single_song.fcg?${params}`,
       {
@@ -1117,10 +1128,11 @@ export async function resolveSongLink(
     if (!raw) return null;
     const album = object(raw.album) ?? {};
     const albumMid = stringValue(album.mid);
+    const resolvedMid = stringValue(raw.mid ?? raw.songmid);
     return {
       source: "qq",
-      id: stringValue(raw.mid ?? raw.songmid) || identifiers.qqMid,
-      mid: identifiers.qqMid,
+      id: resolvedMid || identifiers.qqMid || identifiers.qqNumericId,
+      mid: resolvedMid || identifiers.qqMid || undefined,
       numericId: stringValue(raw.id),
       title: stringValue(raw.title ?? raw.name),
       artists: namesFrom(raw.singer),
